@@ -262,9 +262,18 @@ module Paperclip
         attachment_for(name).file?
       end
 
-      validates_each(name) do |record, attr, value|
-        attachment = record.attachment_for(name)
-        attachment.send(:flush_errors)
+      if self.respond_to?(:table_name)
+        # Use ActiveRecord version of validates_each
+        validates_each(name) do |record, attr, value|
+          attachment = record.attachment_for(name)
+          attachment.send(:flush_errors)
+        end
+      else
+        # Use durran-validatable version of validates_each
+        validates_each(name, :logic => lambda {
+          attachment = self.attachment_for(name)
+          attachment.send(:flush_errors)
+        })
       end
     end
 
