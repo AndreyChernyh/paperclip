@@ -289,10 +289,10 @@ module Paperclip
       message = message.gsub(/:min/, min.to_s).gsub(/:max/, max.to_s)
 
       validates_inclusion_of :"#{name}_file_size",
-                             :in        => range,
+                             (self.respond_to?(:table_name) ? :in : :within) => range,
                              :message   => message,
                              :if        => options[:if],
-                             :unless    => options[:unless],
+                             # :unless    => options[:unless],
                              :allow_nil => true
     end
 
