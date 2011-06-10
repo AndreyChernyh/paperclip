@@ -313,8 +313,8 @@ module Paperclip
       message = options[:message] || "must be set."
       validates_presence_of :"#{name}_file_name",
                             :message   => message,
-                            :if        => options[:if],
-                            :unless    => options[:unless]
+                            :if        => options[:if]
+                            # :unless    => options[:unless]
     end
 
     # Places ActiveRecord-style validations on the content type of the file
@@ -336,16 +336,23 @@ module Paperclip
     def validates_attachment_content_type name, options = {}
       validation_options = options.dup
       allowed_types = [validation_options[:content_type]].flatten
-      validates_each(:"#{name}_content_type", validation_options) do |record, attr, value|
+      f = lambda { |record, attr, value|
         if !allowed_types.any?{|t| t === value } && !(value.nil? || value.blank?)
-          if record.errors.method(:add).arity == -2
+          # if record.errors.method(:add).arity == -2
             message = options[:message] || "is not one of #{allowed_types.join(", ")}"
             message = message.call if message.respond_to?(:call)
             record.errors.add(:"#{name}_content_type", message)
-          else
-            record.errors.add(:"#{name}_content_type", :inclusion, :default => options[:message], :value => value)
-          end
+          # else
+          #   record.errors.add(:"#{name}_content_type", :inclusion, :default => options[:message], :value => value)
+          # end
         end
+      }
+      if self.respond_to?(:table_name)
+        validates_each(:"#{name}_content_type", validation_options, &f)
+      else
+        validates_each(:"#{name}_content_type", :logic => lambda {
+          f.call(self, nil, self.send(:"#{name}_content_type"))
+        })
       end
     end
 
